@@ -1,0 +1,595 @@
+openapi: 3.0.0
+info:
+  title: Physical AI & Humanoid Robotics Textbook API
+  description: API for the Physical AI & Humanoid Robotics textbook system
+  version: 1.0.0
+  contact:
+    name: Textbook Development Team
+    email: textbook@panaversity.edu
+
+servers:
+  - url: https://textbook-api.vercel.app/api
+    description: Production server
+  - url: https://staging-textbook-api.vercel.app/api
+    description: Staging server
+
+paths:
+  /chapters:
+    get:
+      summary: Get all textbook chapters
+      description: Retrieve all chapters with basic metadata
+      responses:
+        '200':
+          description: List of chapters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChapterSummary'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /chapters/{chapterId}:
+    get:
+      summary: Get chapter content
+      description: Retrieve a specific chapter with full content
+      parameters:
+        - name: chapterId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Chapter ID
+      responses:
+        '200':
+          description: Chapter content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /search:
+    get:
+      summary: Search textbook content
+      description: Search across all textbook content
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of results to return
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/profile:
+    get:
+      summary: Get user profile
+      description: Retrieve current user's profile information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update user profile
+      description: Update current user's profile information
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfile'
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/preferences:
+    get:
+      summary: Get user preferences
+      description: Retrieve current user's content preferences
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentPreference'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update user preferences
+      description: Update current user's content preferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContentPreference'
+      responses:
+        '200':
+          description: Updated user preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentPreference'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rag/chat:
+    post:
+      summary: Chat with RAG system
+      description: Send a query to the RAG system and get a response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatQuery'
+      responses:
+        '200':
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /translate:
+    post:
+      summary: Translate content to Urdu
+      description: Translate selected content to Urdu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TranslationRequest'
+      responses:
+        '200':
+          description: Translated content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TranslationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /pdf/export:
+    post:
+      summary: Request PDF export
+      description: Request generation of a PDF version of content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PDFExportRequest'
+      responses:
+        '200':
+          description: PDF export job created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PDFExportJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /pdf/export/{jobId}:
+    get:
+      summary: Get PDF export status
+      description: Check the status of a PDF export job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: PDF export job ID
+      responses:
+        '200':
+          description: PDF export job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PDFExportJob'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    ChapterSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        chapter_number:
+          type: number
+        module:
+          type: string
+        word_count:
+          type: number
+        readability_score:
+          type: number
+      required:
+        - id
+        - title
+        - chapter_number
+        - module
+
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        chapter_number:
+          type: number
+        module:
+          type: string
+        content:
+          type: string
+        word_count:
+          type: number
+        readability_score:
+          type: number
+        sources_count:
+          type: number
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        interactive_elements:
+          type: array
+          items:
+            $ref: '#/components/schemas/InteractiveElement'
+      required:
+        - id
+        - title
+        - chapter_number
+        - module
+        - content
+
+    Citation:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        journal:
+          type: string
+        year:
+          type: number
+        doi:
+          type: string
+        url:
+          type: string
+        citation_type:
+          type: string
+          enum: [peer_reviewed, book, web, other]
+        apa_format:
+          type: string
+      required:
+        - id
+        - title
+        - authors
+        - year
+        - apa_format
+
+    InteractiveElement:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [quiz, acknowledgment, video]
+        content:
+          type: string
+        position:
+          type: number
+      required:
+        - id
+        - type
+        - content
+        - position
+
+    SearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: number
+      required:
+        - results
+        - total
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        content_preview:
+          type: string
+        chapter:
+          type: string
+        relevance_score:
+          type: number
+      required:
+        - id
+        - title
+        - content_preview
+        - chapter
+        - relevance_score
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        institution:
+          type: string
+        hardware_background:
+          type: string
+        software_background:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+
+    UpdateUserProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        institution:
+          type: string
+        hardware_background:
+          type: string
+        software_background:
+          type: string
+
+    ContentPreference:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, expert]
+        language_preferences:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - difficulty_level
+        - language_preferences
+
+    UpdateContentPreference:
+      type: object
+      properties:
+        difficulty_level:
+          type: string
+          enum: [beginner, intermediate, expert]
+        language_preferences:
+          type: array
+          items:
+            type: string
+
+    ChatQuery:
+      type: object
+      properties:
+        query:
+          type: string
+        context:
+          type: string
+          description: Optional context to provide to the model
+        selected_text:
+          type: string
+          description: Optional selected text for focused questions
+      required:
+        - query
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+        model_used:
+          type: string
+        response_time_ms:
+          type: number
+      required:
+        - response
+        - sources
+        - model_used
+        - response_time_ms
+
+    TranslationRequest:
+      type: object
+      properties:
+        text:
+          type: string
+        target_language:
+          type: string
+          default: ur
+        source_type:
+          type: string
+          enum: [chapter, element, custom]
+      required:
+        - text
+        - target_language
+
+    TranslationResponse:
+      type: object
+      properties:
+        original_text:
+          type: string
+        translated_text:
+          type: string
+        target_language:
+          type: string
+        model_used:
+          type: string
+        cached:
+          type: boolean
+      required:
+        - original_text
+        - translated_text
+        - target_language
+        - model_used
+
+    PDFExportRequest:
+      type: object
+      properties:
+        export_type:
+          type: string
+          enum: [full_book, single_chapter, custom_selection]
+        chapter_ids:
+          type: array
+          items:
+            type: string
+        include_figures:
+          type: boolean
+          default: true
+        include_code:
+          type: boolean
+          default: true
+      required:
+        - export_type
+
+    PDFExportJob:
+      type: object
+      properties:
+        id:
+          type: string
+        export_type:
+          type: string
+          enum: [full_book, single_chapter, custom_selection]
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        download_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - export_type
+        - status
+        - created_at
+
+  responses:
+    NotFound:
+      description: Resource not found
+    Unauthorized:
+      description: Unauthorized access
+    BadRequest:
+      description: Invalid request
+    InternalServerError:
+      description: Internal server error
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
